@@ -1,11 +1,12 @@
 <template>
   <div class="p-3 sm:p-4 bg-gray-50 min-h-screen font-sans">
+    <!-- Fondo para cerrar dropdowns -->
     <div v-if="showDropdownDevices || showDropdownDates" @click="closeAllDropdowns" class="fixed inset-0 z-10"></div>
 
-
-
+    <!-- Barra superior: búsqueda y filtros -->
     <div class="flex flex-col lg:flex-row justify-between items-center mb-4 gap-3">
 
+      <!-- Input de búsqueda -->
       <div class="flex w-full lg:w-1/2">
         <div class="flex w-full border border-gray-300 rounded-lg overflow-hidden shadow-inner bg-white">
           <div class="flex items-center justify-center px-3 bg-gray-100 text-gray-500">
@@ -20,8 +21,10 @@
         </div>
       </div>
 
+      <!-- Filtros: dispositivos y fechas -->
       <div class="flex flex-wrap justify-end items-center gap-3 w-full lg:w-auto">
 
+        <!-- Dropdown Dispositivos -->
         <div class="relative z-20" v-click-outside="closeDropdownDevices">
           <button @click="toggleDropdown('devices')"
             class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-150 shadow-sm text-xs sm:text-sm">
@@ -35,7 +38,7 @@
           <div v-if="showDropdownDevices"
             class="absolute z-30 mt-1 right-0 bg-white border border-gray-300 rounded-lg shadow-xl w-48 max-h-52 overflow-y-auto">
             <div
-              class="flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition duration-100 cursor-pointer border-b border-gray-200"
+              class="flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer border-b border-gray-200"
               @click="toggleSelectAllDevices()">
               <input type="checkbox" :checked="allDevicesSelected"
                 class="mr-2 h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none" />
@@ -44,15 +47,16 @@
               </span>
             </div>
             <div v-for="device in dispositivos" :key="device.id"
-              class="flex items-center px-3 py-1.5 hover:bg-blue-50 transition duration-100 cursor-pointer"
-              @click="toggleDeviceSelection(device.id)"> <input type="checkbox"
-                :checked="selectedDevices.includes(device.id)" :value="device.id"
+              class="flex items-center px-3 py-1.5 hover:bg-blue-50 cursor-pointer"
+              @click="toggleDeviceSelection(device.id)">
+              <input type="checkbox" :checked="selectedDevices.includes(device.id)" :value="device.id"
                 class="mr-2 h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none" />
               <span class="text-xs sm:text-sm font-medium text-gray-700 pointer-events-none">{{ device.nombre }}</span>
             </div>
           </div>
         </div>
 
+        <!-- Dropdown Fechas -->
         <div class="relative z-10" v-click-outside="closeDropdownDates">
           <button @click="toggleDropdown('dates')"
             class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-150 shadow-sm text-xs sm:text-sm">
@@ -66,6 +70,7 @@
 
           <div v-if="showDropdownDates"
             class="absolute z-20 mt-1 right-0 bg-white border border-gray-300 rounded-lg shadow-xl p-3 w-64">
+            <!-- Selección rápida -->
             <div class="mb-3 border-b pb-3 border-gray-100">
               <label for="quickRange" class="text-xs font-semibold text-gray-700 block mb-1">Selección Rápida:</label>
               <select id="quickRange" v-model="selectedRange" @change="applyDateRange(selectedRange)"
@@ -75,9 +80,8 @@
               </select>
             </div>
 
+            <!-- Rango personalizado -->
             <div class="flex flex-col gap-2 text-gray-700">
-              <label class="text-xs font-semibold">Rango Personalizado:</label>
-
               <label class="text-xs font-semibold">Fecha Inicio:</label>
               <input type="date" v-model="fechaInicio" @input="clearSelectedRange"
                 class="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
@@ -91,47 +95,49 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
+    <!-- Contador de registros -->
     <div class="flex justify-end mb-4">
       <div class="text-xs font-semibold text-gray-700 p-1.5 bg-blue-100 rounded-md whitespace-nowrap">
-        Mostrando <span class="text-blue-700">{{ paginatedDatos.length }}</span> de <span class="text-blue-700">{{
-          filteredDatos.length }}</span> registros
-        <span v-if="selectedRange && selectedRange !== 'all'" class="ml-1 text-gray-500 italic">({{dateOptions.find(o=>
-          o.key === selectedRange)?.label }})</span>
+        Mostrando <span class="text-blue-700">{{ paginatedDatos.length }}</span> de
+        <span class="text-blue-700">{{ filteredDatos.length }}</span> registros
+        <span v-if="selectedRange && selectedRange !== 'all'" class="ml-1 text-gray-500 italic">
+          ({{dateOptions.find(o => o.key === selectedRange)?.label}})
+        </span>
       </div>
     </div>
 
+    <!-- Tabla principal -->
     <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-
+      <!-- Encabezado -->
       <div v-if="filteredDatos.length > 0"
         class="hidden sm:flex items-center p-3 bg-gray-800 text-white font-semibold uppercase tracking-wider select-none text-xs">
         <h3 class="w-1/4 cursor-pointer" @click="ordenarPor('fecha')">
-          Fecha / Hora <span v-if="sortBy === 'fecha'" class="ml-1">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          Fecha / Hora <span v-if="sortBy === 'fecha'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
         </h3>
         <h3 v-if="selectedDevices.length > 1" class="w-1/6 text-left cursor-pointer"
           @click="ordenarPor('dispositivo_nombre')">
-          Dispositivo <span v-if="sortBy === 'dispositivo_nombre'" class="ml-1">{{ sortOrder === 'asc' ? '▲' : '▼'
-          }}</span>
+          Dispositivo <span v-if="sortBy === 'dispositivo_nombre'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
         </h3>
         <h3 :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'" class="text-right cursor-pointer"
           @click="ordenarPor('litros')">
-          Litros <span v-if="sortBy === 'litros'" class="ml-1">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          Litros <span v-if="sortBy === 'litros'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
         </h3>
         <h3 :class="selectedDevices.length > 1 ? 'w-[15%]' : 'w-1/6'" class="text-right cursor-pointer"
           @click="ordenarPor('ibutton')">
-          iButton ID <span v-if="sortBy === 'ibutton'" class="ml-1">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          iButton ID <span v-if="sortBy === 'ibutton'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
         </h3>
         <h3 :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'" class="text-center">Dato 1</h3>
         <h3 :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'" class="text-center">Dato 2</h3>
       </div>
 
+      <!-- Filas de datos -->
       <div v-if="paginatedDatos.length > 0" class="divide-y divide-gray-100 max-h-[50vh] overflow-y-auto">
         <div v-for="(item, index) in paginatedDatos" :key="index"
           class="p-3 transition duration-150 hover:bg-blue-50 even:bg-white odd:bg-gray-50">
-
+          <!-- Desktop -->
           <div class="hidden sm:flex items-center gap-3 text-sm text-gray-700">
             <div class="w-1/4 font-mono font-medium text-blue-700 truncate text-xs">{{ formatearFecha(item.fecha) }}
             </div>
@@ -142,12 +148,23 @@
               class="text-right font-bold text-gray-800 text-sm">{{ item.litros }} L</div>
             <div :class="selectedDevices.length > 1 ? 'w-[15%]' : 'w-1/6'"
               class="text-right font-mono text-xs text-gray-600 truncate">{{ item.ibutton }}</div>
-            <div :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'"
-              class="text-center text-xs text-gray-400 italic">Pendiente</div>
-            <div :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'"
-              class="text-center text-xs text-gray-400 italic">Pendiente</div>
+            <div :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'" class="text-center text-xs">
+              <select v-model="item.dato1_id" @change="updateItemReference(item, 'dato1_id', $event.target.value)"
+                class="w-full border border-gray-300 rounded-md px-1 py-1 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
+                <option :value="null" :selected="!item.dato1_id">Seleccionar...</option>
+                <option v-for="d1 in dato1Data" :key="d1.id" :value="d1.id">{{ d1.nombre }}</option>
+              </select>
+            </div>
+            <div :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'" class="text-center text-xs">
+              <select v-model="item.dato2_id" @change="updateItemReference(item, 'dato2_id', $event.target.value)"
+                class="w-full border border-gray-300 rounded-md px-1 py-1 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
+                <option :value="null" :selected="!item.dato2_id">Seleccionar...</option>
+                <option v-for="d2 in dato2Data" :key="d2.id" :value="d2.id">{{ d2.nombre }}</option>
+              </select>
+            </div>
           </div>
 
+          <!-- Mobile -->
           <div class="sm:hidden grid grid-cols-2 gap-y-1 text-xs">
             <div class="font-semibold text-gray-600">Fecha/Hora:</div>
             <div class="font-medium text-blue-700 text-right">{{ formatearFecha(item.fecha) }}</div>
@@ -163,12 +180,28 @@
             <div class="font-semibold text-gray-600">iButton ID:</div>
             <div class="font-mono text-gray-600 text-right truncate">{{ item.ibutton }}</div>
 
-            <div class="font-semibold text-gray-600">Datos Extra:</div>
-            <div class="text-gray-400 italic text-right">Pendiente</div>
+            <div class="font-semibold text-gray-600">Dato 1:</div>
+            <div class="text-right text-xs">
+              <select v-model="item.dato1_id" @change="updateItemReference(item, 'dato1_id', $event.target.value)"
+                class="w-full border border-gray-300 rounded-md px-1 py-1 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
+                <option :value="null" :selected="!item.dato1_id">Seleccionar...</option>
+                <option v-for="d1 in dato1Data" :key="d1.id" :value="d1.id">{{ d1.nombre }}</option>
+              </select>
+            </div>
+
+            <div class="font-semibold text-gray-600">Dato 2:</div>
+            <div class="text-right text-xs">
+              <select v-model="item.dato2_id" @change="updateItemReference(item, 'dato2_id', $event.target.value)"
+                class="w-full border border-gray-300 rounded-md px-1 py-1 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
+                <option :value="null" :selected="!item.dato2_id">Seleccionar...</option>
+                <option v-for="d2 in dato2Data" :key="d2.id" :value="d2.id">{{ d2.nombre }}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Mensaje vacío -->
       <div v-else class="p-6 text-center text-gray-500 text-sm">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none"
           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -184,12 +217,11 @@
           Limpiar todos los filtros y búsqueda
         </button>
       </div>
-
     </div>
 
+    <!-- Paginación -->
     <div v-if="filteredDatos.length > 0"
       class="flex flex-col sm:flex-row justify-between items-center mt-4 text-xs text-gray-700 bg-white p-3 rounded-lg shadow-inner gap-2 border border-gray-200">
-
       <div class="flex items-center gap-2">
         <label for="rowsPerPage" class="font-medium text-gray-600">Filas por pág:</label>
         <select id="rowsPerPage" v-model.number="rowsPerPage"
@@ -205,8 +237,8 @@
           <SvgIcon name="chevron-left" class="w-3 h-3" />
         </button>
 
-        <span class="font-medium">Pág. <span class="text-blue-700 font-bold">{{ currentPage }}</span> / <span
-            class="text-blue-700 font-bold">{{ totalPages }}</span></span>
+        <span class="font-medium">Pág. <span class="text-blue-700 font-bold">{{ currentPage }}</span> /
+          <span class="text-blue-700 font-bold">{{ totalPages }}</span></span>
 
         <button @click="nextPage" :disabled="currentPage === totalPages"
           class="px-2 py-1 rounded-md bg-gray-100 border border-gray-300 text-blue-600 disabled:opacity-50 hover:bg-blue-600 hover:text-white transition duration-150 shadow-sm">
@@ -218,20 +250,21 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 import SvgIcon from '@/components/icons/SvgIcon.vue';
+import { useDataFilters } from '@/utils/useDataFilters.js';
 
-// 🚀 Directiva personalizada v-click-outside para cerrar dropdowns
+const BACKEND_URL = "http://localhost:5000";
+
+// Directiva para cerrar dropdown al hacer click fuera
 const vClickOutside = {
   mounted(el, binding) {
     el.__ClickOutsideHandler__ = (event) => {
-      // Si el clic fue fuera del elemento (y sus hijos)
       if (!(el === event.target || el.contains(event.target))) {
-        binding.value(event); // Ejecutar la función proporcionada
+        binding.value(event);
       }
     };
-    // Usar 'click' en el cuerpo del documento
     document.body.addEventListener('click', el.__ClickOutsideHandler__);
   },
   unmounted(el) {
@@ -240,336 +273,104 @@ const vClickOutside = {
 };
 
 export default {
-  components: {
-    SvgIcon
-  },
-  // 💡 Registrar la directiva
-  directives: {
-    'click-outside': vClickOutside,
-  },
+  components: { SvgIcon },
+  directives: { 'click-outside': vClickOutside },
   setup() {
-    // 🔹 Estados de la Tabla
+    // Estados principales
     const datos = ref([]);
-    const searchTerm = ref("");
-    const sortBy = ref(null);
-    const sortOrder = ref("asc");
+    const dato1Data = ref([]);
+    const dato2Data = ref([]);
+    const dispositivos = ref([]);
 
-    // 🔹 Filtros de Dispositivo
-    const dispositivos = ref([
-      { id: 1, nombre: "Estanque Fijo" },
-      { id: 2, nombre: "Estanque Movil" }
-    ]);
-    const allDeviceIds = computed(() => dispositivos.value.map(d => d.id));
-    const selectedDevices = ref([...allDeviceIds.value]);
-    const showDropdownDevices = ref(false);
-
-    // 🔹 Filtros de Fecha
-    const showDropdownDates = ref(false);
-    const fechaInicio = ref("");
-    const fechaFin = ref("");
-    const selectedRange = ref('all');
-    const dateOptions = ref([
-      { key: 'last_hour', label: 'Última Hora' },
-      { key: 'last_12_hours', label: 'Últimas 12 Hrs' },
-      { key: 'last_week', label: 'Última Semana' },
-      { key: 'last_month', label: 'Último Mes' },
-      { key: 'last_6_months', label: 'Últimos 6 Meses' },
-      { key: 'all', label: 'Todos los Tiempos' },
-    ]);
-
-    // 🔹 Paginación
-    const rowsPerPageOptions = [5, 10, 20, 50];
-    const rowsPerPage = ref(5);
-    const currentPage = ref(1);
-
-    // --- FUNCIONES DE INTERFAZ (Dropdowns) ---
-
-    const closeDropdownDevices = () => { showDropdownDevices.value = false; };
-    const closeDropdownDates = () => { showDropdownDates.value = false; };
-    const closeAllDropdowns = () => {
-      showDropdownDevices.value = false;
-      showDropdownDates.value = false;
-    };
-
-    const toggleDropdown = (type) => {
-      if (type === 'devices') {
-        showDropdownDevices.value = !showDropdownDevices.value;
-        showDropdownDates.value = false;
-      } else if (type === 'dates') {
-        showDropdownDates.value = !showDropdownDates.value;
-        showDropdownDevices.value = false;
+    // Cargar datos de referencia
+    const fetchReferenceData = async (endpoint, dataRef) => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/${endpoint}`);
+        dataRef.value = res.data;
+      } catch (err) {
+        console.error(`❌ Error al cargar ${endpoint}:`, err);
       }
     };
 
-    // --- Lógica de Filtros (Dispositivos) ---
+    // Cargar datos principales con filtros
+    const fetchDatos = async () => {
+      let url = `${BACKEND_URL}/datos`;
+      let params = {};
+      if (filters.fechaInicio.value && filters.fechaFin.value) {
+        params.fecha_inicio = filters.fechaInicio.value;
+        params.fecha_fin = filters.fechaFin.value;
+      }
 
-    const allDevicesSelected = computed(() => {
-      return selectedDevices.value.length === allDeviceIds.value.length;
-    });
-
-    const toggleDeviceSelection = (deviceId) => {
-      const index = selectedDevices.value.indexOf(deviceId);
-      if (index === -1) {
-        selectedDevices.value.push(deviceId); // Seleccionar
-      } else {
-        if (selectedDevices.value.length > 1) {
-          selectedDevices.value.splice(index, 1); // Deseleccionar
-        }
+      try {
+        const res = await axios.get(url, { params });
+        datos.value = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error("❌ Error al obtener datos de /datos", err);
+        datos.value = [];
       }
     };
 
-    const toggleSelectAllDevices = () => {
-      if (allDevicesSelected.value) {
-        // Deseleccionar todos menos el primero para asegurar al menos un valor
-        selectedDevices.value = [dispositivos.value[0].id];
-      } else {
-        // Seleccionar todos
-        selectedDevices.value = [...allDeviceIds.value];
+    // Composable de filtros
+    const filters = useDataFilters(datos, dispositivos, fetchDatos);
+
+    // Cargar dispositivos desde backend y seleccionar todos por defecto
+    const fetchDispositivos = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/dispositivos`);
+        dispositivos.value = Array.isArray(res.data) ? res.data : [];
+        const allIds = dispositivos.value.map(d => d.id);
+        filters.selectedDevices.value = [...allIds];
+      } catch (err) {
+        console.error("⚠️ Error al cargar dispositivos:", err);
       }
     };
 
-    // --- Lógica de Filtros (Fechas) ---
+    // Actualizar referencia en un item
+    const updateItemReference = async (item, field, value) => {
+      let finalValue = value === 'null' || value === '' ? null : parseInt(value, 10);
+      item[field] = finalValue;
 
-    const clearSelectedRange = () => {
-      selectedRange.value = null;
-    };
+      let method = item.id ? 'PATCH' : 'POST';
+      let url = item.id ? `${BACKEND_URL}/datos/${item.id}` : `${BACKEND_URL}/datos`;
+      let payload = item.id ? { [field]: finalValue } : { ...item, [field]: finalValue };
 
-    const clearDateFilters = () => {
-      fechaInicio.value = "";
-      fechaFin.value = "";
-      selectedRange.value = 'all';
-    };
+      try {
+        const res = await axios({ method, url, data: payload });
+        if (method === 'POST') item.id = res.data.id;
 
-    const clearAllFilters = () => {
-      searchTerm.value = "";
-      selectedDevices.value = [...allDeviceIds.value];
-      clearDateFilters();
-    };
-
-    const applyDateRange = (key) => {
-      if (!key || key === 'all') {
-        fechaInicio.value = "";
-        fechaFin.value = "";
-        selectedRange.value = 'all';
-        return;
+        // ✅ Recargar datos con los filtros actuales
+        await fetchDatos();
+      } catch (error) {
+        console.error(`❌ Error al ${method === 'POST' ? 'crear' : 'actualizar'} registro`, error);
       }
-
-      const now = new Date();
-      let start = null;
-
-      if (key === 'last_hour') {
-        start = new Date(now.getTime() - 60 * 60 * 1000);
-      } else if (key === 'last_12_hours') {
-        start = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-      } else if (key === 'last_week') {
-        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      } else if (key === 'last_month') {
-        start = new Date(now);
-        start.setMonth(now.getMonth() - 1);
-      } else if (key === 'last_6_months') {
-        start = new Date(now);
-        start.setMonth(now.getMonth() - 6);
-      }
-
-      // Establecer fechas en formato YYYY-MM-DD
-      fechaFin.value = now.toISOString().split('T')[0];
-      fechaInicio.value = start.toISOString().split('T')[0];
-      selectedRange.value = key;
     };
 
 
-    // 🔹 Ordenar
-    const ordenarPor = (campo) => {
-      if (sortBy.value === campo) sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
-      else { sortBy.value = campo; sortOrder.value = "asc"; }
-    };
-
-    // 🔹 Formatear fecha (con formato 24 horas)
-    const formatearFecha = (ts) => {
-      const fecha = new Date(ts);
-      return fecha.toLocaleString("es-CL", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        // 🚨 Configuración clave para 24 horas
-        hour12: false,
+    // Formatear fecha
+    const formatearFecha = (isoString) => {
+      if (!isoString) return 'N/A';
+      const date = new Date(isoString);
+      return date.toLocaleString('es-CL', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
       });
     };
 
-    // Función auxiliar para obtener el nombre del dispositivo
-    const getDeviceName = (id) => {
-      const device = dispositivos.value.find(d => d.id === id);
-      return device ? device.nombre : 'Desconocido';
-    }
-
-
-    // 🔹 Filtrado general y preparación de datos para ordenación
-    const filteredDatos = computed(() => {
-      let lista = datos.value.filter(item => selectedDevices.value.includes(item.dispositivo_id));
-
-      // 1. Filtrado por Fecha
-      if (fechaInicio.value && fechaFin.value) {
-        let startFilter, endFilter;
-
-        // Lógica de filtrado para rangos de horas o días (mantenida de la lógica previa)
-        if (selectedRange.value && selectedRange.value !== 'all' && selectedRange.value.includes('hour')) {
-          const now = new Date();
-          let start = new Date(now);
-
-          if (selectedRange.value === 'last_hour') {
-            start = new Date(now.getTime() - 60 * 60 * 1000);
-          } else if (selectedRange.value === 'last_12_hours') {
-            start = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-          }
-
-          startFilter = start;
-          endFilter = now;
-
-          lista = lista.filter(item => {
-            const fechaItem = new Date(item.fecha);
-            return fechaItem.getTime() >= startFilter.getTime() && fechaItem.getTime() <= endFilter.getTime();
-          });
-
-        } else {
-          // Lógica para rangos por día (solo fechas)
-          const createLocalDate = (dateString, shouldAdvanceDay = false) => {
-            const parts = dateString.split('-').map(Number);
-            const date = new Date(parts[0], parts[1] - 1, parts[2]);
-            if (shouldAdvanceDay) {
-              date.setDate(date.getDate() + 1);
-            }
-            date.setHours(0, 0, 0, 0);
-            return date;
-          };
-
-          startFilter = createLocalDate(fechaInicio.value);
-          endFilter = createLocalDate(fechaFin.value, true);
-
-          lista = lista.filter(item => {
-            const fechaItem = new Date(item.fecha);
-            return fechaItem >= startFilter && fechaItem < endFilter;
-          });
-        }
-      }
-
-      // 2. Filtrado por Búsqueda
-      if (searchTerm.value) {
-        const s = searchTerm.value.toLowerCase();
-        lista = lista.filter(item =>
-          formatearFecha(item.fecha).toLowerCase().includes(s) ||
-          String(item.litros).includes(s) ||
-          String(item.ibutton).includes(s) ||
-          getDeviceName(item.dispositivo_id).toLowerCase().includes(s)
-        );
-      }
-
-      // Crear una versión de la lista con el nombre del dispositivo para la ordenación
-      const listaConNombre = lista.map(item => ({
-        ...item,
-        dispositivo_nombre: getDeviceName(item.dispositivo_id)
-      }));
-
-
-      // 3. Ordenación
-      if (sortBy.value) {
-        listaConNombre.sort((a, b) => {
-          let valA = a[sortBy.value];
-          let valB = b[sortBy.value];
-
-          if (sortBy.value === "fecha") { valA = new Date(valA); valB = new Date(valB); }
-          if (sortBy.value === "dispositivo_nombre") {
-            return sortOrder.value === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
-          }
-
-          if (valA < valB) return sortOrder.value === "asc" ? -1 : 1;
-          if (valA > valB) return sortOrder.value === "asc" ? 1 : -1;
-          return 0;
-        });
-      }
-
-      return listaConNombre;
-    });
-
-    // 🔹 Paginación reactiva
-    const totalPages = computed(() => Math.ceil(filteredDatos.value.length / rowsPerPage.value) || 1);
-    const paginatedDatos = computed(() => {
-      const start = (currentPage.value - 1) * rowsPerPage.value;
-      return filteredDatos.value.slice(start, start + rowsPerPage.value);
-    });
-
-    const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
-    const previousPage = () => { if (currentPage.value > 1) currentPage.value--; };
-
-    // --- Watchers ---
-    watch([rowsPerPage, filteredDatos], () => currentPage.value = 1);
-
-    watch([fechaInicio, fechaFin], (newVals, oldVals) => {
-      // Si se modifican las fechas manualmente, deseleccionar el rango rápido
-      if (fechaInicio.value && fechaFin.value && (newVals[0] !== oldVals[0] || newVals[1] !== oldVals[1])) {
-        selectedRange.value = null;
-      } else if (!fechaInicio.value && !fechaFin.value) {
-        selectedRange.value = 'all';
-      }
-    });
-
-    // --- Carga de Datos ---
+    // Carga inicial
     onMounted(async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/datos");
-
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          // Usamos directamente el dispositivo_id que viene del backend
-          datos.value = res.data.map((item) => ({
-            ...item,
-            isFake: false, // Marca que vienen de la API real
-          }));
-          console.log("✅ Datos cargados desde API");
-        } else {
-          throw new Error("API devolvió array vacío");
-        }
-
-      } catch (err) {
-        console.warn("⚠️ Error al obtener datos o API vacía. Usando datos de prueba:", err);
-
-        // Datos de prueba
-        datos.value = [
-          { id: 1, fecha: "2025-10-28T10:00:00Z", litros: 50.5, ibutton: "A1B2C3D4", dispositivo_id: 1, isFake: true },
-          { id: 2, fecha: "2025-10-28T15:30:00Z", litros: 120.0, ibutton: "E5F6G7H8", dispositivo_id: 2, isFake: true },
-          { id: 6, fecha: new Date(new Date().getTime() - 30 * 60 * 1000).toISOString(), litros: 10.0, ibutton: "TEST_H1", dispositivo_id: 1, isFake: true },
-          { id: 7, fecha: new Date(new Date().getTime() - 5 * 60 * 60 * 1000).toISOString(), litros: 25.0, ibutton: "TEST_H2", dispositivo_id: 2, isFake: true },
-          ...Array(30).fill(0).map((_, i) => ({
-            id: i + 8,
-            fecha: `2025-10-${(30 - (i % 5)).toString().padStart(2, '0')}T${(10 + (i % 8)).toString().padStart(2, '0')}:00:00Z`,
-            litros: Math.floor(Math.random() * 100) + 10,
-            ibutton: `IB${1000 + i}`,
-            dispositivo_id: (i % 2) + 1,
-            isFake: true,
-          })),
-        ];
-      } finally {
-        applyDateRange('all');
-      }
+      await fetchReferenceData('dato1', dato1Data);
+      await fetchReferenceData('dato2', dato2Data);
+      await fetchDispositivos();
+      filters.applyDateRange('all');
+      await fetchDatos();
     });
-
 
     return {
-      datos, searchTerm, filteredDatos, paginatedDatos,
-      formatearFecha, ordenarPor, sortBy, sortOrder,
-      dispositivos, selectedDevices,
-      showDropdownDevices, showDropdownDates, toggleDropdown,
-      closeDropdownDevices, closeDropdownDates, closeAllDropdowns,
-      fechaInicio, fechaFin, rowsPerPageOptions, rowsPerPage,
-      currentPage, totalPages, nextPage, previousPage,
-      dateOptions, applyDateRange, selectedRange, clearSelectedRange,
-      clearDateFilters, clearAllFilters,
-      toggleDeviceSelection, getDeviceName, toggleSelectAllDevices, allDevicesSelected
+      datos, dato1Data, dato2Data, dispositivos,
+      updateItemReference, formatearFecha,
+      ...filters
     };
-  },
+  }
 };
 </script>
-
-<style scoped>
-/* Estilos no modificados (asumiendo que SvgIcon y los estilos Tailwind están definidos externamente) */
-</style>

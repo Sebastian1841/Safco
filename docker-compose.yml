@@ -1,16 +1,40 @@
 version: '3.9'
 services:
+  # Servicio de la lógica de negocio (API)
   backend:
     build: ./Backend
     ports:
       - "5000:5000"
     restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://safcouser:safcopassword@db:5432/safcodb
+      - THINGSBOARD_HOST=http://localhost:8080
 
+  # Servicio de la interfaz de usuario
   frontend:
     build: ./frontend
     ports:
-      - "8080:8080"
+      - "5173:5173"   # ✅ Servimos el frontend en el puerto 5173 de tu PC
     depends_on:
       - backend
     environment:
-      - VUE_APP_BACKEND_URL=http://backend:5000
+      # El navegador del host necesita apuntar a localhost:5000
+      - VUE_APP_BACKEND_URL=http://localhost:5000
+
+  # Servicio de Base de Datos PostgreSQL
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: safcouser
+      POSTGRES_PASSWORD: safcopassword
+      POSTGRES_DB: safcodb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
