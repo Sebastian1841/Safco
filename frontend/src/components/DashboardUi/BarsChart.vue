@@ -159,7 +159,7 @@ function initChart() {
 
   const datasets = devicesToShow.map((dev, i) => ({
     label: `Dispositivo ${dev}`,
-    backgroundColor: ['#1E3A8A', '#065F46', '#B91C1C', '#92400E', '#312E81'][i % 5],
+    backgroundColor: ['#2563EB', '#ff6600', '#065F46', '#B91C1C', '#312E81'][i % 5],  
     borderRadius: 3,
     maxBarThickness: 6,
     barPercentage: 0.6,
@@ -189,6 +189,8 @@ function initChart() {
           displayColors: false,
           callbacks: {
             title: ([p]) => new Date(p.raw.x).toLocaleString("es-CL", {
+              timeZone: "America/Santiago",
+              hour12: false,                    // ✅ Muestra 24 horas
               year: 'numeric',
               month: 'numeric',
               day: 'numeric',
@@ -196,6 +198,7 @@ function initChart() {
               minute: '2-digit',
               second: '2-digit',
             }),
+
             label: ({ raw }) => {
               const l = [`Litros: ${raw.y} L`];
               if (raw.ibutton) l.push(`iButton: ${raw.ibutton}`);

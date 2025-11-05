@@ -89,7 +89,7 @@ const manualFijo = computed(() =>
       const dev = dispositivosConTipo.value.find(x => x.id === d.dispositivo);
       return dev && dev.tipo === "fijo";
     })
-    .reduce((t, r) => t + Number(r.diferencia_manual || 0), 0)
+    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)   // ✅ Math.abs
 );
 
 const manualMovil = computed(() =>
@@ -98,6 +98,6 @@ const manualMovil = computed(() =>
       const dev = dispositivosConTipo.value.find(x => x.id === d.dispositivo);
       return dev && dev.tipo === "movil";
     })
-    .reduce((t, r) => t + Number(r.diferencia_manual || 0), 0)
+    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)   // ✅ Math.abs
 );
 </script>

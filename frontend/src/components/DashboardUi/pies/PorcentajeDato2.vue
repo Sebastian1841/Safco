@@ -40,7 +40,16 @@ function render() {
       labels,
       datasets: [{
         data: values,
-        backgroundColor: ["#1E3A8A", "#10B981", "#DC2626", "#7C3AED", "#D97706"]
+        backgroundColor: [
+          "#FFB74D", // Naranjo pastel
+          "#4ADE80", // Verde suave
+          "#BA68C8", // Lila pastel
+          "#29B6F6", // Celeste
+          "#EF5350", // Rojo coral
+          "#FFD54F", // Amarillo suave
+          "#81C784", // Verde menta
+          "#9575CD", // Lavanda
+        ]
       }]
     },
     options: {
