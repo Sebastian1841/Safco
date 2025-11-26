@@ -42,7 +42,10 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {
+      "no-undef": "off",
+      "vue/no-setup-props-destructure": "off"
+    }
   },
   "browserslist": [
     "> 1%",

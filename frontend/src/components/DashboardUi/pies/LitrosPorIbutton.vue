@@ -9,65 +9,201 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, defineProps, nextTick } from "vue";
+import { ref, onMounted, onActivated, watch, nextTick, defineProps } from "vue";
+import axios from "axios";
 import { Chart, BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
 
 Chart.register(BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend);
 
+/* ======================================
+   PROPS DESDE EL DASHBOARD
+====================================== */
 const props = defineProps({
-  datos: { type: Array, default: () => [] }
+  fechaInicio: String,
+  fechaFin: String,
+  selectedDevices: Array,
+  selectedRange: String
 });
 
+/* ======================================
+   CONSTANTES
+====================================== */
+const BACKEND_URL = "http://localhost:5000";
+const NO_IBTN = "_NO_IBUTTON_";
+
+const ibuttonAlias = {
+  "0169F9060100009F": "Llavero 1",
+  "0168FD2701000048": "Llavero 2",
+  "0197E81801000062": "Llavero 3",
+  "01AAF92601000029": "Llavero 4",
+  "0173E22601000077": "Llavero 5",
+  "0146FF1901000033": "Llavero Negro",
+  "016E818A01000082": "Llavero Verde",
+  "01C44B1A0100006F": "Llavero Amarillo",
+  "01884C890100005F": "Llavero Verde Nuevo",
+  "01FB132801000042": "Llavero Azul",
+  "017B0C14010000E1": "Llavero Rojo",
+  [NO_IBTN]: "Sin iButton",
+};
+
+const colorPalette = [
+  "#ff660080","#2563EB80","#22C55E80","#A855F780","#E11D4880",
+  "#14B8A680","#0EA5E980","#F59E0B80","#6366F180","#EF444480","#84CC1690"
+];
+
+/* ======================================
+   STATE
+====================================== */
 const canvas = ref(null);
 let chart = null;
+const rawDatos = ref([]);
 
+/* ======================================
+   FETCH DIRECTO
+====================================== */
+async function fetchDatos() {
+  try {
+    const r = await axios.get(`${BACKEND_URL}/datos`);
+    rawDatos.value = Array.isArray(r.data) ? [...r.data] : [];
+  } catch (err) {
+    console.error("Error cargando datos iButton:", err);
+    rawDatos.value = [];
+  }
+}
+
+/* ======================================
+   FILTROS IGUALES A BarsChart
+====================================== */
+function aplicarFiltros() {
+  let data = [...rawDatos.value];
+  const now = new Date();
+
+  // ⭐ FILTRO POR DISPOSITIVOS
+  if (props.selectedDevices?.length) {
+    data = data.filter(d => props.selectedDevices.includes(Number(d.dispositivo_id)));
+  }
+
+  // ⭐ FILTRO POR RANGOS RÁPIDOS
+  if (props.selectedRange === "last_hour") {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 1 * 3600000));
+  } else if (props.selectedRange === "last_12_hours") {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 12 * 3600000));
+  } else if (props.selectedRange === "last_week") {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 7 * 24 * 3600000));
+  } else if (props.selectedRange === "last_month") {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 30 * 24 * 3600000));
+  } else if (props.selectedRange === "last_6_months") {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 180 * 24 * 3600000));
+  }
+
+  // ⭐ FILTRO POR FECHA INICIO-FIN
+  else if (props.fechaInicio && props.fechaFin) {
+    const ini = new Date(`${props.fechaInicio}T00:00:00`);
+    const fin = new Date(`${props.fechaFin}T23:59:59`);
+    data = data.filter(d => new Date(d.fecha) >= ini && new Date(d.fecha) <= fin);
+  }
+
+  // ⭐ FILTRO POR DEFECTO (24 horas)
+  else {
+    data = data.filter(d => new Date(d.fecha) >= new Date(now - 24 * 3600000));
+  }
+
+  return data;
+}
+
+/* ======================================
+   RENDERIZAR GRÁFICO (CON ANIMACIÓN)
+====================================== */
 function render() {
   if (!canvas.value) return;
-  if (chart) { chart.destroy(); chart = null; }
 
+  if (chart) {
+    try { chart.destroy(); } catch {
+      //a
+    }
+    chart = null;
+  }
+
+  const datosFiltrados = aplicarFiltros();
+
+  /* Agrupar litros por iButton */
   const totals = {};
+  for (const d of datosFiltrados) {
+    const key = d?.ibutton && d.ibutton.trim() ? d.ibutton.trim() : NO_IBTN;
+    totals[key] = (totals[key] || 0) + Number(d.litros || 0);
+  }
 
-  props.datos.forEach(d => {
-    if (!d.ibutton) return;
-    const litros = Number(d.litros) || 0;
-    totals[d.ibutton] = (totals[d.ibutton] || 0) + litros;
+  const rawLabels = Object.keys(totals).sort((a, b) => {
+    if (a === NO_IBTN) return 1;
+    if (b === NO_IBTN) return -1;
+    return (ibuttonAlias[a] ?? a).localeCompare(ibuttonAlias[b] ?? b, "es", { numeric: true });
   });
 
-  const labels = Object.keys(totals);
-  const values = Object.values(totals);
+  const labels = rawLabels.map(k => ibuttonAlias[k] ?? k);
+  const values = rawLabels.map(k => totals[k]);
 
   const ctx = canvas.value.getContext("2d");
+
+  /* ===============================
+     1️⃣ CREAR CHART CON DATA EN 0
+     =============================== */
   chart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
       datasets: [{
         label: "Litros",
-        data: values,
-        backgroundColor: "#2563EB"
+        data: labels.map(() => 0),  // ⬅ todas las barras arrancan en 0
+        backgroundColor: rawLabels.map((_, i) => colorPalette[i % colorPalette.length])
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: "y",
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ({ raw }) => ` ${raw.toFixed(2)} L`
-          }
-        }
-      },
+      animation: false, // ⬅ sin animación inicial
+      plugins: { legend: { display: false } },
       scales: {
         x: { beginAtZero: true },
         y: { ticks: { autoSkip: false } }
       }
     }
   });
+
+  /* ===============================
+     2️⃣ SEGUNDO UPDATE → ANIMACIÓN
+     =============================== */
+  setTimeout(() => {
+    chart.data.datasets[0].data = values;
+
+    chart.options.animation = {
+      duration: 900,
+      easing: "easeOutQuart",
+      delay: (ctx) => ctx.dataIndex * 120  // ⭐ cada barra aparece con retraso
+    };
+
+    chart.update();
+  }, 40);
 }
 
-onMounted(() => nextTick(render));
+/* ======================================
+   MOUNT + ACTIVATED
+====================================== */
+async function updateChart() {
+  await fetchDatos();
+  await nextTick();
+  render();
+}
 
-watch(() => props.datos, () => nextTick(render), { deep: true });
+onMounted(updateChart);
+onActivated(updateChart);
+
+watch(
+  () => [props.fechaInicio, props.fechaFin, props.selectedDevices, props.selectedRange],
+  async () => {
+    await nextTick();
+    render();
+  },
+  { deep: true }
+);
 </script>

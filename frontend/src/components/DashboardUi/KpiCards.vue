@@ -6,7 +6,7 @@
       <p class="text-gray-500 text-xs font-semibold">Litros Totales</p>
       <p class="text-gray-900 text-sm font-medium">Estanque Fijo</p>
       <h2 class="text-2xl font-bold text-blue-600 mt-2">
-        {{ litrosFijo.toLocaleString('es-CL') }} L
+        {{ Math.round(litrosFijo).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }} L
       </h2>
     </div>
 
@@ -15,7 +15,7 @@
       <p class="text-gray-500 text-xs font-semibold">Litros Totales</p>
       <p class="text-gray-900 text-sm font-medium">Estanque Móvil</p>
       <h2 class="text-2xl font-bold text-green-600 mt-2">
-        {{ litrosMovil.toLocaleString('es-CL') }} L
+        {{ Math.round(litrosMovil).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }} L
       </h2>
     </div>
 
@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, watch } from "vue";
+import { computed, defineProps } from "vue";
 
 const props = defineProps({
   datos: { type: Array, default: () => [] },
@@ -49,12 +49,6 @@ const props = defineProps({
   dispositivos: { type: Array, default: () => [] }
 });
 
-// Debug
-watch(props, () => {
-  console.log("📌 KpiCards - datos:", props.datos);
-  console.log("📌 KpiCards - manuales:", props.manuales);
-  console.log("📌 KpiCards - dispositivos:", props.dispositivos);
-});
 
 // Resolver tipo automáticamente si backend no tiene campo "tipo"
 const dispositivosConTipo = computed(() =>

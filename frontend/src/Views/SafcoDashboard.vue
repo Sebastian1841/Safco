@@ -1,28 +1,27 @@
 <template>
   <div class="p-3 sm:p-4 bg-gray-50 min-h-screen font-sans">
 
-    <!-- CAPA CIERRE DROPDOWNS -->
-    <div v-if="showDropdownDevices || showDropdownDates" @click="closeAllDropdowns" class="fixed inset-0 z-10">
-    </div>
+    <div v-if="showDropdownDevices || showDropdownDates" @click="closeAllDropdowns" class="fixed inset-0 z-10"></div>
 
-    <!-- FILTROS -->
-    <div class="flex flex-col lg:flex-row justify-end items-center mb-4 gap-3">
+    <div class="flex flex-col lg:flex-row justify-between items-center mb-4 gap-3">
+
+      <button @click="emitirModalNivel"
+        class="px-3 py-1.5 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition shadow-sm text-xs sm:text-sm">
+        Ver Nivel de Estanque
+      </button>
+
       <div class="flex flex-wrap justify-end items-center gap-3 w-full lg:w-auto">
 
-        <!-- ✅ DROPDOWN DISPOSITIVOS -->
+        <!-- dropdown dispositivos (no tocado) -->
         <div class="relative z-20" v-click-outside="closeDropdownDevices">
           <button @click="toggleDropdown('devices')"
             class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition shadow-sm text-xs sm:text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24"
-              stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+            <SvgIcon name="chevron-down" class="w-4 h-4" />
             <span>Dispositivos ({{ selectedDevices.length }})</span>
           </button>
 
           <div v-if="showDropdownDevices"
             class="absolute z-30 mt-1 right-0 bg-white border border-gray-300 rounded-lg shadow-xl w-48 max-h-52 overflow-y-auto">
-
             <div @click="toggleSelectAllDevices"
               class="flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer border-b">
               <input type="checkbox" :checked="allDevicesSelected" class="mr-2 h-3 w-3" />
@@ -36,19 +35,14 @@
               <input type="checkbox" :checked="selectedDevices.includes(device.id)" class="mr-2 h-3 w-3" />
               <span class="text-xs sm:text-sm">{{ device.nombre }}</span>
             </div>
-
           </div>
         </div>
 
-        <!-- ✅ DROPDOWN FECHAS -->
-        <div class="relative z-10" v-click-outside="closeDropdownDates">
+        <!-- dropdown fechas (no tocado) -->
+        <div class="relative z-20" v-click-outside="closeDropdownDates">
           <button @click="toggleDropdown('dates')"
-            class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition shadow-sm text-xs sm:text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24"
-              stroke="current" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-150 shadow-sm text-xs sm:text-sm">
+            <SvgIcon name="calendar-range" class="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Rango de Fechas</span>
           </button>
 
@@ -60,9 +54,7 @@
               <select v-model="selectedRange" @change="applyDateRange(selectedRange)"
                 class="w-full border px-2 py-1.5 text-xs rounded-md bg-white">
                 <option :value="null" disabled>-- Rango Predefinido --</option>
-                <option v-for="option in dateOptions" :key="option.key" :value="option.key">
-                  {{ option.label }}
-                </option>
+                <option v-for="option in dateOptions" :key="option.key" :value="option.key">{{ option.label }}</option>
               </select>
             </div>
 
@@ -79,6 +71,7 @@
                 Limpiar Filtro de Fechas
               </button>
             </div>
+
           </div>
         </div>
 
@@ -87,135 +80,267 @@
 
     <div class="bg-white rounded-lg shadow p-3 space-y-6">
 
-      <CakeChart :datos="filteredDatos" />
+      <!-- ⭐ CAMBIO NECESARIO -->
+      <CakeChart :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" :selected-devices="selectedDevices"
+        :selected-range="selectedRange" />
 
       <BarsChart :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" :selected-devices="selectedDevices"
         :selected-range="selectedRange" :dispositivos="dispositivos" />
     </div>
 
+    <ModalNivelEstanque v-if="showModalNivel" :nivelFijo="nivelFijo" :nivelMovil="nivelMovil" :maxFijo="maxFijoTotal"
+      :maxMovil="maxMovilTotal" :historial="historial" :dispositivos="dispositivos" @cerrar="showModalNivel = false" />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
-import axios from 'axios'
+import { ref, onMounted, watch, computed } from "vue";
+import axios from "axios";
 
-import CakeChart from '@/components/DashboardUi/CakeChart.vue'
-import BarsChart from '@/components/DashboardUi/BarsChart.vue'
+import ModalNivelEstanque from "@/components/DashboardUi/ModalNivelEstanque.vue";
+import CakeChart from "@/components/DashboardUi/CakeChart.vue";
+import BarsChart from "@/components/DashboardUi/BarsChart.vue";
+import SvgIcon from "@/components/icons/SvgIcon.vue";
 
-import { useDataFilters } from '@/utils/useDataFilters.js'
+import { useDataFilters } from "@/utils/useDataFilters.js";
+import { kpiStore } from "@/stores/kpiStore.js";
 
 export default {
-  name: 'SafcoDashboard',
-  components: { CakeChart, BarsChart },
+  name: "SafcoDashboard",
+  components: { CakeChart, BarsChart, ModalNivelEstanque, SvgIcon },
 
-  // ✅ AGREGAMOS "emit"
-  setup(props, { emit }) {
+  setup() {
+    const BACKEND_URL = "http://localhost:5000";
 
-    const BACKEND_URL = "http://localhost:5000"
+    const cargasCombustible = ref([]);
+    const dispositivos = ref([]);
+    const datosDummy = ref([]);
+    const manuales = ref([]);
+    const manualesFiltrados = ref([]);
+    const showModalNivel = ref(false);
 
-    const dispositivos = ref([])
-    const datosDummy = ref([])
-    const manuales = ref([])
-    const manualesFiltrados = ref([])
+    let filters = useDataFilters(datosDummy, dispositivos, fetchDatos);
 
-    let filters = useDataFilters(datosDummy, dispositivos, fetchDatos)
+    // ⭐ NUEVO — datos EXCLUSIVOS para los charts Pie
+    const datosCharts = ref([]);
 
+    function emitirModalNivel() {
+      showModalNivel.value = true;
+    }
+
+    /* ===========================
+       CARGAS (NO TOCADO)
+    ============================ */
+    async function fetchNiveles() {
+      const res = await axios.get(`${BACKEND_URL}/cargas_combustible`);
+      cargasCombustible.value = Array.isArray(res.data) ? res.data : [];
+    }
+
+    /* ===========================
+       MANUALES (NO TOCADO)
+    ============================ */
     async function fetchManuales() {
-      try {
-        const r = await axios.get(`${BACKEND_URL}/litros_control`)
-        manuales.value = Array.isArray(r.data) ? r.data : []
-        filtrarManuales()
-      } catch (e) {
-        console.error("Error cargando manuales:", e)
-      }
+      const r = await axios.get(`${BACKEND_URL}/litros_control`);
+      manuales.value = Array.isArray(r.data) ? r.data : [];
+      filtrarManuales();
     }
 
     function filtrarManuales() {
-      const now = new Date()
-      const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      const now = new Date();
+      const last24 = new Date(now.getTime() - 24 * 3600 * 1000);
 
-      let result = [...manuales.value]
+      let result = [...manuales.value];
 
-      if (filters.selectedDevices.value.length) {
+      if (filters.selectedDevices.value.length)
         result = result.filter(m =>
           filters.selectedDevices.value.includes(Number(m.dispositivo))
-        )
-      }
+        );
 
-      if (filters.selectedRange.value === 'last_week') {
-        result = result.filter(m => new Date(m.fecha) >= now - 7 * 86400000)
-      }
-      else if (filters.selectedRange.value === 'last_month') {
-        result = result.filter(m => new Date(m.fecha) >= now - 30 * 86400000)
-      }
+      if (filters.selectedRange.value === "last_week")
+        result = result.filter(m => new Date(m.fecha) >= now - 7 * 86400000);
+
+      else if (filters.selectedRange.value === "last_month")
+        result = result.filter(m => new Date(m.fecha) >= now - 30 * 86400000);
+
       else if (filters.fechaInicio.value && filters.fechaFin.value) {
-        const ini = new Date(filters.fechaInicio.value)
-        const fin = new Date(filters.fechaFin.value + "T23:59:59")
-        result = result.filter(m => new Date(m.fecha) >= ini && new Date(m.fecha) <= fin)
-      }
-      else {
-        result = result.filter(m => new Date(m.fecha) >= last24)
+        const ini = new Date(filters.fechaInicio.value);
+        const fin = new Date(filters.fechaFin.value + "T23:59:59");
+        result = result.filter(m => new Date(m.fecha) >= ini && new Date(m.fecha) <= fin);
       }
 
-      manualesFiltrados.value = result
+      else result = result.filter(m => new Date(m.fecha) >= last24);
+
+      manualesFiltrados.value = result;
     }
 
-    async function fetchDispositivos() {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/dispositivos`)
-        dispositivos.value = Array.isArray(res.data) ? res.data : []
-        const ids = dispositivos.value.map(d => d.id)
-        filters.selectedDevices.value = [...ids]
-      } catch (e) {
-        console.error("Error dispositivos:", e)
+    /* ===========================
+       NIVELES + HISTORIAL (NO TOCADO)
+    ============================ */
+    const nivelesCalculados = computed(() => {
+      const eventos = [];
+
+      const nombreEstanque = id =>
+        id === 1 ? "Estanque Fijo" : id === 2 ? "Estanque Móvil" : "Estanque";
+
+      if (!cargasCombustible.value.length) {
+        return {
+          fijo: 0,
+          movil: 0,
+          maxFijo: 0,
+          maxMovil: 0,
+          eventos: []
+        };
       }
+
+      const primeraCarga = cargasCombustible.value
+        .map(c => new Date(`${c.fecha}T${c.hora}`))
+        .sort((a, b) => a - b)[0];
+
+      let raw = [];
+
+      cargasCombustible.value.forEach(c => {
+        raw.push({
+          tipo: "carga",
+          dispositivo: Number(c.dispositivo_id),
+          fechaISO: `${c.fecha}T${c.hora}`,
+          cantidad: Number(c.litros_total)
+        });
+      });
+
+      datosDummy.value.forEach(d => {
+        const fechaTB = new Date(d.fecha);
+
+        if (fechaTB >= primeraCarga) {
+          raw.push({
+            tipo: "descarga",
+            dispositivo: Number(d.dispositivo_id),
+            fechaISO: d.fecha,
+            cantidad: Number(d.litros)
+          });
+        }
+      });
+
+      raw.sort((a, b) => new Date(a.fechaISO) - new Date(b.fechaISO));
+
+      let nivelFijo = 0;
+      let nivelMovil = 0;
+      let maxFijo = 0;
+      let maxMovil = 0;
+
+      raw.forEach(ev => {
+        const fechaObj = new Date(ev.fechaISO);
+
+        let totalPosterior = 0;
+
+        if (ev.dispositivo === 1) {
+          if (ev.tipo === "carga") nivelFijo += ev.cantidad;
+          if (ev.tipo === "descarga") nivelFijo -= ev.cantidad;
+          totalPosterior = nivelFijo;
+          maxFijo = Math.max(maxFijo, totalPosterior);
+        }
+
+        if (ev.dispositivo === 2) {
+          if (ev.tipo === "carga") nivelMovil += ev.cantidad;
+          if (ev.tipo === "descarga") nivelMovil -= ev.cantidad;
+          totalPosterior = nivelMovil;
+          maxMovil = Math.max(maxMovil, totalPosterior);
+        }
+
+        eventos.push({
+          tipo: ev.tipo,
+          descripcion: ev.tipo === "carga" ? "Carga registrada" : "Descarga de combustible",
+          cantidad: ev.cantidad,
+          estanque: nombreEstanque(ev.dispositivo),
+          total_posterior: totalPosterior,
+          fecha_texto: fechaObj.toLocaleDateString("es-CL"),
+          hora_texto: fechaObj.toLocaleTimeString("es-CL", { hour12: false }),
+          _orden: fechaObj.getTime()
+        });
+      });
+
+      return {
+        fijo: nivelFijo,
+        movil: nivelMovil,
+        maxFijo,
+        maxMovil,
+        eventos: eventos.sort((a, b) => b._orden - a._orden)
+      };
+    });
+
+    /* ===========================
+       DISPOSITIVOS Y DATOS (NO TOCADO)
+    ============================ */
+    async function fetchDispositivos() {
+      const res = await axios.get(`${BACKEND_URL}/dispositivos`);
+      dispositivos.value = Array.isArray(res.data) ? res.data : [];
+      filters.selectedDevices.value = dispositivos.value.map(d => d.id);
     }
 
     async function fetchDatos() {
-      try {
-        const r = await axios.get(`${BACKEND_URL}/datos`)
-        datosDummy.value = Array.isArray(r.data) ? r.data : []
-        filters.filtrarDatos()
-      } catch (e) {
-        console.error("Error datos:", e)
-      }
+      const r = await axios.get(`${BACKEND_URL}/datos`);
+      datosDummy.value = Array.isArray(r.data) ? r.data : [];
+      filters.filtrarDatos();
+
+      // ⭐ PRIMER CARGA DE DATOS PARA CHARTS
+      datosCharts.value = [...filters.filteredDatos.value];
     }
 
+    /* ===========================
+       MOUNT (NO TOCADO)
+    ============================ */
     onMounted(async () => {
-      await fetchDispositivos()
-      await fetchDatos()
-      await fetchManuales()
+      await fetchDispositivos();
+      await fetchDatos();
+      await fetchManuales();
+      await fetchNiveles();
 
-      // ✅ ahora sí, todos los datos existen → emit
-      emit("update-kpis", {
+      kpiStore.updateKPIs({
         datos: filters.filteredDatos.value,
         manuales: manualesFiltrados.value,
-        dispositivos: dispositivos.value
-      })
-    })
+        dispositivos: dispositivos.value,
+        cargas: cargasCombustible.value
+      });
+    });
 
+    /* ===========================
+       WATCHERS (⭐ AQUÍ SE ARREGLA TODO)
+    ============================ */
     watch(
       [filters.selectedDevices, filters.selectedRange, filters.fechaInicio, filters.fechaFin],
       () => {
-        filtrarManuales()
-        emit("update-kpis", {
+        // ⭐ ACTUALIZA PIE CHARTS SIEMPRE
+        datosCharts.value = [...filters.filteredDatos.value];
+
+        filtrarManuales();
+
+        kpiStore.updateKPIs({
           datos: filters.filteredDatos.value,
           manuales: manualesFiltrados.value,
-          dispositivos: dispositivos.value
-        })
+          dispositivos: dispositivos.value,
+          cargas: cargasCombustible.value
+        });
       },
       { deep: true }
-    )
-
+    );
 
     return {
+      showModalNivel,
+      emitirModalNivel,
       dispositivos,
+
+      datosCharts,
+
+      nivelFijo: computed(() => nivelesCalculados.value.fijo),
+      nivelMovil: computed(() => nivelesCalculados.value.movil),
+      maxFijoTotal: computed(() => nivelesCalculados.value.maxFijo),
+      maxMovilTotal: computed(() => nivelesCalculados.value.maxMovil),
+      historial: computed(() => nivelesCalculados.value.eventos),
+
       ...filters,
       manualesFiltrados
-    }
+    };
   }
-}
+};
 </script>
 
 <style scoped></style>

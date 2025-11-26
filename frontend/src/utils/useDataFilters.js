@@ -28,12 +28,12 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
 
   // 🔹 Opciones estáticas
   const dateOptions = ref([
-    { key: 'last_hour',      label: 'Última Hora' },
-    { key: 'last_12_hours',  label: 'Últimas 12 Hrs' },
-    { key: 'last_week',      label: 'Última Semana' },
-    { key: 'last_month',     label: 'Último Mes' },
-    { key: 'last_6_months',  label: 'Últimos 6 Meses' },
-    { key: 'all',            label: 'Todos los Tiempos' },
+    { key: 'last_hour', label: 'Última Hora' },
+    { key: 'last_12_hours', label: 'Últimas 12 Hrs' },
+    { key: 'last_week', label: 'Última Semana' },
+    { key: 'last_month', label: 'Último Mes' },
+    { key: 'last_6_months', label: 'Últimos 6 Meses' },
+    { key: 'all', label: 'Rango Por Defecto' },
   ]);
 
   // 🔹 Ordenación
@@ -71,19 +71,19 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
   };
   const toggleDeviceSelection = (deviceId) => {
     const index = selectedDevices.value.indexOf(deviceId);
-    if (index === -1) { 
-      selectedDevices.value.push(deviceId); 
-    } else { 
-      if (selectedDevices.value.length > 1) { 
-        selectedDevices.value.splice(index, 1); 
+    if (index === -1) {
+      selectedDevices.value.push(deviceId);
+    } else {
+      if (selectedDevices.value.length > 1) {
+        selectedDevices.value.splice(index, 1);
       }
     }
   };
   const toggleSelectAllDevices = () => {
-    if (allDevicesSelected.value) { 
-      selectedDevices.value = [_dispositivosRef.value[0]?.id].filter(Boolean); 
-    } else { 
-      selectedDevices.value = [...allDeviceIds.value]; 
+    if (allDevicesSelected.value) {
+      selectedDevices.value = [_dispositivosRef.value[0]?.id].filter(Boolean);
+    } else {
+      selectedDevices.value = [...allDeviceIds.value];
     }
   };
 
@@ -94,7 +94,7 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
   };
   const toYMDLocal = (d) => {
     const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };
 
   const clearSelectedRange = () => { selectedRange.value = null; };
@@ -113,11 +113,11 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
     const now = new Date();
     let fechaInicioCalc = null;
 
-    if (key === 'last_hour')         fechaInicioCalc = new Date(now.getTime() -  1 * 60 * 60 * 1000);
-    else if (key === 'last_12_hours')fechaInicioCalc = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-    else if (key === 'last_week')    fechaInicioCalc = new Date(now.getTime() -  7 * 24 * 60 * 60 * 1000);
-    else if (key === 'last_month')   { fechaInicioCalc = new Date(now); fechaInicioCalc.setMonth(now.getMonth() - 1); }
-    else if (key === 'last_6_months'){ fechaInicioCalc = new Date(now); fechaInicioCalc.setMonth(now.getMonth() - 6); }
+    if (key === 'last_hour') fechaInicioCalc = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+    else if (key === 'last_12_hours') fechaInicioCalc = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    else if (key === 'last_week') fechaInicioCalc = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    else if (key === 'last_month') { fechaInicioCalc = new Date(now); fechaInicioCalc.setMonth(now.getMonth() - 1); }
+    else if (key === 'last_6_months') { fechaInicioCalc = new Date(now); fechaInicioCalc.setMonth(now.getMonth() - 6); }
 
     fechaFin.value = toYMDLocal(now);
     fechaInicio.value = toYMDLocal(fechaInicioCalc);
@@ -136,7 +136,6 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
 
   // --- Filtrado General ---
   const filteredDatos = computed(() => {
-    // lectura para vincular con _touch si lo usas
     void _touch.value;
 
     let lista = _initialDataRef.value.filter(item =>
@@ -163,16 +162,43 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
     }
 
     if (searchTerm.value) {
-      const s = String(searchTerm.value).toLowerCase();
-      lista = lista.filter(item =>
-        String(item.litros).includes(s) ||
-        String(item.ibutton).toLowerCase().includes(s) ||
-        getDeviceName(item.dispositivo_id).toLowerCase().includes(s)
-      );
+      const s = searchTerm.value.toLowerCase();
+
+      lista = lista.filter(item => {
+        const compare = (val) => String(val || "").toLowerCase().includes(s);
+
+        return (
+          compare(new Date(item.fecha).toLocaleString("es-CL")) ||
+          compare(getDeviceName(item.dispositivo_id)) ||
+          compare(item.litros) ||
+          compare(item.ibutton) ||
+          compare(item.dato1_nombre) ||
+          compare(item.dato2_nombre)
+        );
+      });
+    }
+
+
+    // ✅ ORDENACIÓN QUE FALTABA
+    if (sortBy.value) {
+      lista = lista.slice().sort((a, b) => {
+        let x = a[sortBy.value];
+        let y = b[sortBy.value];
+
+        if (sortBy.value === "fecha") {
+          x = new Date(x);
+          y = new Date(y);
+        }
+
+        if (x < y) return sortOrder.value === "asc" ? -1 : 1;
+        if (x > y) return sortOrder.value === "asc" ? 1 : -1;
+        return 0;
+      });
     }
 
     return lista;
   });
+
 
   // --- Paginación ---
   const totalPages = computed(() => Math.ceil(filteredDatos.value.length / rowsPerPage.value) || 1);
@@ -208,11 +234,11 @@ export function useDataFilters(initialDataRef, dispositivosRef, fetchDatosFuncti
     clearSelectedRange, clearDateFilters, clearAllFilters, applyDateRange,
     toggleDeviceSelection, toggleSelectAllDevices,
     ordenarPor: (campo) => {
-      if (sortBy.value === campo) { 
-        sortOrder.value = (sortOrder.value === "asc") ? "desc" : "asc"; 
-      } else { 
-        sortBy.value = campo; 
-        sortOrder.value = "asc"; 
+      if (sortBy.value === campo) {
+        sortOrder.value = (sortOrder.value === "asc") ? "desc" : "asc";
+      } else {
+        sortBy.value = campo;
+        sortOrder.value = "asc";
       }
     },
     nextPage, previousPage, getDeviceName, formatearFecha,

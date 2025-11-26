@@ -129,8 +129,8 @@
           @click="ordenarPor('ibutton')">
           iButton ID <span v-if="sortBy === 'ibutton'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
         </h3>
-        <h3 :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'" class="text-center">Dato 1</h3>
-        <h3 :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'" class="text-center">Dato 2</h3>
+        <h3 :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'" class="text-center">COD Equipo</h3>
+        <h3 :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'" class="text-center">ACC Negocio</h3>
       </div>
 
       <!-- Filas de datos -->
@@ -145,9 +145,14 @@
               {{ getDeviceName(item.dispositivo_id) }}
             </div>
             <div :class="selectedDevices.length > 1 ? 'w-[10%]' : 'w-1/6'"
-              class="text-right font-bold text-gray-800 text-sm">{{ item.litros }} L</div>
+              class="text-right font-bold text-gray-800 text-sm">
+              {{ Number(item.litros).toLocaleString('es-CL') }} L
+            </div>
+
             <div :class="selectedDevices.length > 1 ? 'w-[15%]' : 'w-1/6'"
-              class="text-right font-mono text-xs text-gray-600 truncate">{{ item.ibutton }}</div>
+              class="text-right font-mono text-xs text-gray-600 truncate">
+              {{ ibuttonAlias[item.ibutton] ?? item.ibutton }}
+            </div>
             <div :class="selectedDevices.length > 1 ? 'w-1/4' : 'w-1/4'" class="text-center text-xs">
               <select v-model="item.dato1_id" @change="updateItemReference(item, 'dato1_id', $event.target.value)"
                 class="w-full border border-gray-300 rounded-md px-1 py-1 text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
@@ -175,7 +180,10 @@
             </template>
 
             <div class="font-semibold text-gray-600">Litros:</div>
-            <div class="font-bold text-gray-800 text-right">{{ item.litros }} L</div>
+            <div class="font-bold text-gray-800 text-right">
+              {{ Number(item.litros).toLocaleString('es-CL') }} L
+            </div>
+
 
             <div class="font-semibold text-gray-600">iButton ID:</div>
             <div class="font-mono text-gray-600 text-right truncate">{{ item.ibutton }}</div>
@@ -254,6 +262,22 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import SvgIcon from '@/components/icons/SvgIcon.vue';
 import { useDataFilters } from '@/utils/useDataFilters.js';
+
+const NO_IBTN = "_NO_IBUTTON_";
+const ibuttonAlias = {
+  "0169F9060100009F": "Llavero 1",
+  "0168FD2701000048": "Llavero 2",
+  "0197E81801000062": "Llavero 3",
+  "01AAF92601000029": "Llavero 4",
+  "0173E22601000077": "Llavero 5",
+  "0146FF1901000033": "Llavero Negro",
+  "016E818A01000082": "Llavero Verde",
+  "01C44B1A0100006F": "Llavero Amarillo",
+  "01884C890100005F": "Llavero Verde Nuevo",
+  "01FB132801000042": "Llavero Azul",
+  "017B0C14010000E1": "Llavero Rojo",
+  [NO_IBTN]: "Sin iButton",
+};
 
 const BACKEND_URL = "http://localhost:5000";
 
@@ -367,9 +391,9 @@ export default {
     });
 
     return {
-      datos, dato1Data, dato2Data, dispositivos,
+      datos, dato1Data, dato2Data, dispositivos, ibuttonAlias,
       updateItemReference, formatearFecha,
-      ...filters
+      ...filters,
     };
   }
 };

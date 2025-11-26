@@ -53,7 +53,8 @@ export default {
       menuPrincipal: [
         { text: "Dashboard", route: "/", icon: "dashboard" },
         { text: "Tables", route: "/tables", icon: "tables" },       // minúscula
-        { text: "Ingresar Datos", route: "/input-data", icon: "ingresar" }, // minúscula
+        { text: "Ingresar Datos", route: "/input-data", icon: "ingresar" }, 
+        { text: "Factura Prueba", route: "/factura", icon: "copy"},
       ]
     };
   }
