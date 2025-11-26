@@ -3,4 +3,5 @@ flask
 flask_cors
 requests
 psycopg2-binary
-Flask-SQLAlchemy  # 👈 ¡AQUÍ ESTABA EL ERROR!
+Flask-SQLAlchemy  
+pdfplumber
