@@ -51,11 +51,13 @@ export default {
   data() {
     return {
       menuPrincipal: [
-        { text: "Dashboard", route: "/", icon: "dashboard" },
-        { text: "Tables", route: "/tables", icon: "tables" },       // minúscula
-        { text: "Ingresar Datos", route: "/input-data", icon: "ingresar" }, 
-        { text: "Factura Prueba", route: "/factura", icon: "copy"},
+        { text: "Panel General", route: "/", icon: "dashboard-pro" },
+        { text: "Administración", route: "/tables", icon: "reportes-pro" },
+        { text: "Carga Manual", route: "/input-data", icon: "carga-manual" },
+        { text: "Gestión de Facturas", route: "/factura", icon: "facturas-pro" },
       ]
+
+
     };
   }
 

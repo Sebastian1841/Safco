@@ -24,14 +24,12 @@
         <!-- Dropdown Fechas -->
         <div class="relative ml-auto" v-click-outside="() => showDropdownFechas = false">
 
-          <!-- Botón -->
           <button @click="showDropdownFechas = !showDropdownFechas"
             class="flex items-center gap-1 px-3 py-1 bg-white border rounded-md text-xs shadow-sm hover:bg-gray-100">
             <span>Fechas</span>
             <SvgIcon name="chevron-down" class="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
 
-          <!-- Contenido del dropdown -->
           <div v-if="showDropdownFechas"
             class="absolute right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl p-3 w-48 z-40">
 
@@ -64,24 +62,40 @@
       <div v-for="(item, index) in eventosFiltrados" :key="index"
         class="flex items-center gap-4 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition">
 
-        <!-- Icono -->
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="item.tipo === 'descarga'
-          ? 'bg-red-100 text-red-600'
-          : 'bg-green-100 text-green-600'">
+        <!-- ============================== -->
+        <!--   ÍCONO SEGÚN ORIGEN          -->
+        <!-- ============================== -->
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+          :class="{
+            'bg-red-100 text-red-600': item.origen === 'sensor',
+            'bg-green-100 text-green-600': item.origen === 'manual',
+            'bg-blue-100 text-blue-600': item.origen === 'factura'
+          }">
 
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 
-            <!-- DESCARGA -->
-            <path v-if="item.tipo === 'descarga'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <!-- DESCARGA (sensor) -->
+            <path v-if="item.origen === 'sensor'"
+              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 3v14m0 0l-4-4m4 4l4-4M4 21h16" />
 
-            <!-- CARGA -->
-            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <!-- CARGA MANUAL -->
+            <path v-else-if="item.origen === 'manual'"
+              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 21V7m0 0l-4 4m4-4l4 4M4 3h16" />
 
+            <!-- CARGA FACTURA -->
+            <path v-else
+              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4h16v16H4z" />
+
           </svg>
+
         </div>
 
+        <!-- ============================== -->
+        <!--         CONTENIDO TEXTO         -->
+        <!-- ============================== -->
 
         <div class="flex-1 space-y-1">
 
@@ -92,9 +106,14 @@
           <div class="flex justify-between text-xs">
             <span class="text-slate-500">Movimiento</span>
 
-            <span class="px-2 py-0.5 rounded-md font-semibold text-[10px]" :class="item.tipo === 'descarga'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-green-100 text-green-700'">
+            <!-- BADGE SEGÚN ORIGEN -->
+            <span
+              class="px-2 py-0.5 rounded-md font-semibold text-[10px]"
+              :class="{
+                'bg-red-100 text-red-700': item.origen === 'sensor',
+                'bg-green-100 text-green-700': item.origen === 'manual',
+                'bg-blue-100 text-blue-700': item.origen === 'factura'
+              }">
               {{ item.descripcion }}
               ({{ item.tipo === 'descarga' ? '-' : '+' }}
               {{ item.cantidad.toLocaleString('es-CL') }} L)
@@ -121,7 +140,6 @@
         No hay movimientos registrados en este rango de fechas.
       </div>
 
-      <!-- Límite -->
       <p v-if="props.eventos.length >= LIMITE_HISTORIAL" class="text-center text-xs text-blue-600 mt-2">
         Mostrando solo los últimos {{ LIMITE_HISTORIAL }} eventos.
       </p>
@@ -132,7 +150,8 @@
 
 <script setup>
 import { ref, computed } from "vue"
-import SvgIcon from '@/components/icons/SvgIcon.vue';
+import SvgIcon from '@/components/icons/SvgIcon.vue'
+
 const props = defineProps({
   eventos: { type: Array, default: () => [] }
 })
@@ -157,7 +176,6 @@ function limpiarFechas() {
   fechaFin.value = ""
 }
 
-// rango válido
 const rangoInvalido = computed(() => {
   if (!fechaInicio.value || !fechaFin.value) return false
   const ini = new Date(fechaInicio.value)
@@ -165,7 +183,6 @@ const rangoInvalido = computed(() => {
   return (fin - ini) / (1000 * 3600 * 24) > MAX_DIAS
 })
 
-// filtrado completo
 const eventosFiltrados = computed(() => {
   if (rangoInvalido.value) return []
 

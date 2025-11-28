@@ -1,4 +1,3 @@
-# routes/factura_routes.py
 
 from flask import Blueprint, request, jsonify
 from modules.facturas.service import FacturaService
@@ -15,7 +14,7 @@ def listar_facturas():
 
 
 # ==============================
-# SUBIR FACTURA (ya funcionando)
+# SUBIR FACTURA
 # ==============================
 @factura_bp.post("/subir")
 def subir_factura():

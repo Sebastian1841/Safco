@@ -2,7 +2,7 @@
     <div class="bg-white p-4 sm:p-6 rounded-lg shadow-xl border border-gray-200">
 
         <h2 class="text-xl font-semibold text-blue-700 mb-4 flex items-center gap-2">
-            Registro Manual de Descaga de Combustible
+            Registro Manual Totalizador de Combustible
         </h2>
 
         <!-- FORMULARIO -->

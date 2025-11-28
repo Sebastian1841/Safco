@@ -49,8 +49,7 @@ const props = defineProps({
   dispositivos: { type: Array, default: () => [] }
 });
 
-
-// Resolver tipo automáticamente si backend no tiene campo "tipo"
+// Resolver tipo cuando backend no lo trae
 const dispositivosConTipo = computed(() =>
   props.dispositivos.map(d => ({
     ...d,
@@ -58,7 +57,7 @@ const dispositivosConTipo = computed(() =>
   }))
 );
 
-// ✅ Totales
+// Totales
 const litrosFijo = computed(() =>
   props.datos
     .filter(d => {
@@ -83,7 +82,7 @@ const manualFijo = computed(() =>
       const dev = dispositivosConTipo.value.find(x => x.id === d.dispositivo);
       return dev && dev.tipo === "fijo";
     })
-    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)   // ✅ Math.abs
+    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)
 );
 
 const manualMovil = computed(() =>
@@ -92,6 +91,6 @@ const manualMovil = computed(() =>
       const dev = dispositivosConTipo.value.find(x => x.id === d.dispositivo);
       return dev && dev.tipo === "movil";
     })
-    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)   // ✅ Math.abs
+    .reduce((t, r) => t + Math.abs(Number(r.diferencia_manual || 0)), 0)
 );
 </script>

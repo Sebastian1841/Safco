@@ -8,6 +8,7 @@ class Factura(db.Model):
     litros         = db.Column(db.Float)
     fecha          = db.Column(db.String(20))
     total          = db.Column(db.Integer)
+    proveedor      = db.Column(db.String(100), default="COPEC")  
 
     def to_dict(self):
         return {
@@ -16,5 +17,6 @@ class Factura(db.Model):
             "producto": self.producto,
             "litros": self.litros,
             "fecha": self.fecha,
-            "total": self.total
+            "total": self.total,
+            "proveedor": self.proveedor  
         }

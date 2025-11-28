@@ -233,6 +233,41 @@
         <path stroke-linecap="round" stroke-linejoin="round"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
+    <!-- Dashboard -->
+    <svg v-else-if="name === 'dashboard-pro'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 13h7V3H3v10zM3 21h7v-6H3v6zM14 21h7V11h-7v10zM14 3v6h7V3h-7z" />
+    </svg>
+    <!-- Reportes Pro -->
+    <svg v-else-if="name === 'reportes-pro'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v18H3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9h18M9 3v18" />
+    </svg>
+    <!-- Facturas Pro -->
+    <svg v-else-if="name === 'facturas-pro'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10l4 4v14H3V3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8M8 16h5" />
+    </svg>
+    <!-- Descarga (sensor) -->
+    <svg v-else-if="name === 'descarga-sensor'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v14m0 0l-4-4m4 4l4-4M4 21h16" />
+    </svg>
+    <!-- Carga Manual -->
+    <svg v-else-if="name === 'carga-manual'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21V7m0 0l-4 4m4-4l4 4M4 3h16" />
+    </svg>
+    <!-- Carga Factura -->
+    <svg v-else-if="name === 'carga-factura'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z" />
+    </svg>
+
 </template>
 
 <script>

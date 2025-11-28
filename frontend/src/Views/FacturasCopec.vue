@@ -1,29 +1,10 @@
 <template>
-    <div class="p-6">
-
-        <!-- BOTÓNES DE ACCIÓN -->
-        <div class="flex items-center gap-3 mb-4">
-
-            <!-- Botón agregar factura -->
-            <button @click="mostrarModal = true"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
-                + Ingresar Factura
-            </button>
-
-            <!-- Botón eliminar (solo si hay seleccionadas) -->
-            <transition name="fade">
-                <button v-if="seleccionadas.length > 0" @click="eliminarSeleccionadas"
-                    class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold">
-                    <SvgIcon name="trash" class="w-4 h-4" />
-                    <span>Eliminar ({{ seleccionadas.length }})</span>
-                </button>
-
-            </transition>
-
-        </div>
+    <div class="p-1">
 
         <!-- TABLA -->
-        <FacturaTable v-model="seleccionadas" :facturas="facturas" />
+        <FacturaTable v-model="seleccionadas" :facturas="facturas" @nuevaFactura="mostrarModal = true"
+            @eliminarSeleccionadas="eliminarSeleccionadas" />
+
 
         <!-- MODAL SUBIR FACTURA -->
         <FacturaUploadModal v-if="mostrarModal" @close="mostrarModal = false" @uploaded="cargarFacturas" />
@@ -33,7 +14,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import axios from "axios"
-import SvgIcon from '@/components/icons/SvgIcon.vue';
+
 
 import FacturaTable from "@/components/FacturaUi/FacturaTable.vue"
 import FacturaUploadModal from "@/components/FacturaUi/FacturaUploadModal.vue"
